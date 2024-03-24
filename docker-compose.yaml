@@ -1,0 +1,23 @@
+version: "3"
+services:
+  app:
+    build: .  # Збудувати образ з Dockerfile в поточній директорії
+    ports:
+      - "80:3000"  # Перенаправлення трафіку з 80 порту хоста на 3000 порт контейнера
+    depends_on:
+      mongoserver:
+        condition: service_healthy  # Запускати app лише після того, як mongoserver буде готовий до роботи
+  mongoserver:
+    image: mongo:5.0  # Використання офіційного образу MongoDB версії 5.0
+    ports:
+      - "27017:27017"  # Відкриття стандартного порту MongoDB для зовнішніх підключень
+    volumes:
+      - mongodata:/data/db  # Зберігання даних MongoDB у персистентний том mongodata
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo 127.0.0.1:27017/test --quiet  # Перевірка стану MongoDB
+      interval: 10s  # Інтервал перевірки стану
+      timeout: 10s   # Максимальний час очікування відповіді на перевірку стану
+      retries: 5     # Кількість спроб перевірки стану перед оголошенням про неготовність сервісу
+
+volumes:
+  mongodata:  # Оголошення тому для зберігання даних
